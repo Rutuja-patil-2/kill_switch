@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ks
+      POSTGRES_PASSWORD: ks
+      POSTGRES_DB: killswitch
+    volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ks -d killswitch"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mockworld:
+    build: ./mockworld
+
+  gateway:
+    build: ./gateway
+    environment:
+      DATABASE_URL: postgresql://ks:ks@db:5432/killswitch
+      JWT_SECRET: dev-change-me
+      ADMIN_KEY: dev-admin
+      UPSTREAMS: '{"records":"http://mockworld:9000/records","payments":"http://mockworld:9000/payments","documents":"http://mockworld:9000/documents"}'
+    depends_on:
+      db:
+        condition: service_healthy
+      mockworld:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
