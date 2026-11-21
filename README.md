@@ -13,12 +13,9 @@ tamper detection, plain-update immutability, dynamic admin status changes, gatew
 restart persistence, integration tests, and repeatability checks.
 
 Fixed during verification:
-- Added explicit pool lifecycle handling and the existing async psycopg pool configuration.
-- Ensured JSONB, UUID, and text[] values use the adapters shown in `gateway/app/ledger.py`.
-- Added a JSON HTTP exception handler and clear gateway errors.
-- Added the `X-Action-Id` response header to blocked proxy responses.
-- Added Git Bash-safe token reseeding and a reload bind mount.
-- Added the `.gitignore` and package pins required for repeatable verification.
+- Added `X-Action-Id` and a clear JSON `message` to upstream-unreachable (502) responses.
+- Updated the tampered-token integration check to alter the first character of the JWT signature.
+- Removed the reload-verification comment from the gateway source.
 
 ## Run it
 

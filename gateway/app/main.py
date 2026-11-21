@@ -20,8 +20,6 @@ from .util import parse_json, redact, summarize
 # 4. Snapshot existing state, forward the request, and capture the after-state.
 # 5. Record reads or changes and the final HTTP result.
 # 6. Return the upstream response plus the X-Action-Id audit identifier.
-# Reload verification: this source edit should restart uvicorn through the bind mount.
-
 UPSTREAMS: dict[str, str] = json.loads(os.environ.get("UPSTREAMS", "{}"))
 ADMIN_KEY = os.environ.get("ADMIN_KEY", "")
 METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
@@ -123,7 +121,11 @@ async def proxy(
     except httpx.HTTPError as e:
         async with db.pool.connection() as conn:
             await ledger.record_result(conn, action.id, "failed", 502, {"error": str(e)})
-        return JSONResponse({"error": "upstream unreachable", "action_id": action.id}, status_code=502)
+        return JSONResponse(
+            {"message": "upstream unreachable", "action_id": action.id},
+            status_code=502,
+            headers={"X-Action-Id": action.id},
+        )
 
     ok = 200 <= r.status_code < 300
     async with db.pool.connection() as conn:

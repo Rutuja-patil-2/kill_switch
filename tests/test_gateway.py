@@ -98,7 +98,10 @@ try:
     check("missing authorization", code == 401,
           "expected HTTP 401; got " + str(code) + " " + str(json_body(raw)))
 
-    tampered = TOKENS["clerk"][:-1] + ("A" if TOKENS["clerk"][-1:] != "A" else "B")
+    token_parts = TOKENS["clerk"].split(".")
+    signature = token_parts[-1]
+    token_parts[-1] = ("A" if not signature or signature[0] != "A" else "B") + signature[1:]
+    tampered = ".".join(token_parts)
     code, headers, raw = request("GET", "/tools/records/r1", token=tampered)
     check("tampered token", code == 401,
           "expected HTTP 401; got " + str(code) + " " + str(json_body(raw)))
